@@ -1,4 +1,4 @@
-FROM node:25.8.0
+FROM node:24.22.1
 
 # mediasoup のビルドに必要な依存関係をインストール
 RUN apt-get update && apt-get install -y \

@@ -2,8 +2,7 @@
 * wslとubuntuインストール
     - 動作確認:Ubuntu 24.04
 
-* ubuntuでnode.js, docker, docker-composeインストール
-    - node v20.20.0
+* ubuntuでDocker, Docker Composeをインストール
     - Docker version 28.1.1, build 4eba377
     - Docker Compose version v2.35.1
 
@@ -47,7 +46,7 @@ docker compose logs --tail=100 app
 
 サーバー起動とWebpackのビルド成功を確認し、[HTTPS画面](https://localhost:3443/)へアクセスします。自己署名証明書の警告が表示されますが、画面が表示されれば初期起動の確認は完了です。
 
-ホスト側の`npm install`は実行には不要です。VS Codeの型解決と赤波線の解消が必要な場合のみ、リポジトリのルートで実行します。
+ホスト側Node.jsは通常不要です。VS Codeの型解決と赤波線の解消のためホスト側で`npm install`を実行する場合は、Node.js 24.22.1を使用してください。
 
 
 ### TypeScriptコードの変更
