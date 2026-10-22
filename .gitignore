@@ -20,7 +20,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 *.log
-logs/client-diagnostics/
+logs/
+
+ai-designs-docs/
 
 # OSのシステムファイル
 .DS_Store
