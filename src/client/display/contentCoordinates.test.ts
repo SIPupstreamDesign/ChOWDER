@@ -164,14 +164,14 @@ describe('virtualToWindowCoordinates', () => {
 // ============================================================
 
 describe('calcItownsResizeRect', () => {
-    it('コンテンツとウィンドウが一致するとき offset は 0、w/h はピクセルサイズ、contentW/H はコンテンツピクセルサイズ', () => {
+    it('コンテンツとウィンドウが一致するとき旧版相当の1px overlapを持つ', () => {
         const win = makeWindow(0, 0, 1920, 1080, 1920, 1080);
         const content = makeContent(0, 0, 1920, 1080);
         const rect = calcItownsResizeRect(content, win);
-        assert.strictEqual(rect.x, 0);
-        assert.strictEqual(rect.y, 0);
-        assert.strictEqual(rect.w, 1920);
-        assert.strictEqual(rect.h, 1080);
+        assert.strictEqual(rect.x, -1);
+        assert.strictEqual(rect.y, -1);
+        assert.strictEqual(rect.w, 1921);
+        assert.strictEqual(rect.h, 1081);
         assert.strictEqual(rect.contentW, 1920);
         assert.strictEqual(rect.contentH, 1080);
     });
@@ -182,10 +182,10 @@ describe('calcItownsResizeRect', () => {
         const win = makeWindow(1920, 1080, 1920, 1080, 1920, 1080);
         const content = makeContent(0, 0, 3840, 2160);
         const rect = calcItownsResizeRect(content, win);
-        assert.strictEqual(rect.x, 1920);
-        assert.strictEqual(rect.y, 1080);
-        assert.strictEqual(rect.w, 1920);
-        assert.strictEqual(rect.h, 1080);
+        assert.strictEqual(rect.x, 1919);
+        assert.strictEqual(rect.y, 1079);
+        assert.strictEqual(rect.w, 1921);
+        assert.strictEqual(rect.h, 1081);
         assert.strictEqual(rect.contentW, 3840);
         assert.strictEqual(rect.contentH, 2160);
     });
@@ -196,10 +196,10 @@ describe('calcItownsResizeRect', () => {
         const win = makeWindow(0, 0, 1920, 1080, 1920, 1080);
         const content = makeContent(500, 500, 1000, 1000);
         const rect = calcItownsResizeRect(content, win);
-        assert.strictEqual(rect.x, -500);
-        assert.strictEqual(rect.y, -500);
-        assert.strictEqual(rect.w, 1920);
-        assert.strictEqual(rect.h, 1080);
+        assert.strictEqual(rect.x, -501);
+        assert.strictEqual(rect.y, -501);
+        assert.strictEqual(rect.w, 1921);
+        assert.strictEqual(rect.h, 1081);
         assert.strictEqual(rect.contentW, 1000);
         assert.strictEqual(rect.contentH, 1000);
     });
@@ -207,14 +207,14 @@ describe('calcItownsResizeRect', () => {
     it('スケールが 2 倍（pixel が virtual の 2 倍）のときピクセル空間で計算される', () => {
         // ウィンドウ: virtual(1920,1080) 1920x1080、pixel=3840x2160 → scaleX/Y=2
         // relX=-1920,relY=-1080 → contentCoords.x=-3840,y=-2160,w=7680,h=4320
-        // x=3840, y=2160, w=3840, h=2160, contentW=7680, contentH=4320
+        // x=3839, y=2159, w=3841, h=2161, contentW=7680, contentH=4320
         const win = makeWindow(1920, 1080, 1920, 1080, 3840, 2160);
         const content = makeContent(0, 0, 3840, 2160);
         const rect = calcItownsResizeRect(content, win);
-        assert.strictEqual(rect.x, 3840);
-        assert.strictEqual(rect.y, 2160);
-        assert.strictEqual(rect.w, 3840);
-        assert.strictEqual(rect.h, 2160);
+        assert.strictEqual(rect.x, 3839);
+        assert.strictEqual(rect.y, 2159);
+        assert.strictEqual(rect.w, 3841);
+        assert.strictEqual(rect.h, 2161);
         assert.strictEqual(rect.contentW, 7680);
         assert.strictEqual(rect.contentH, 4320);
     });
@@ -225,14 +225,14 @@ describe('calcItownsResizeRect', () => {
         // contentCoords.x = (0-500)*2 = -1000 → x=1000
         // contentCoords.y = (0-300)*2 = -600  → y=600
         // contentW = 2000*2 = 4000, contentH = 2000*2 = 4000
-        // w=2000, h=1000
+        // x=999, y=599, w=2001, h=1001
         const win = makeWindow(500, 300, 1000, 500, 2000, 1000);
         const content = makeContent(0, 0, 2000, 2000);
         const rect = calcItownsResizeRect(content, win);
-        assert.strictEqual(rect.x, 1000);
-        assert.strictEqual(rect.y, 600);
-        assert.strictEqual(rect.w, 2000);
-        assert.strictEqual(rect.h, 1000);
+        assert.strictEqual(rect.x, 999);
+        assert.strictEqual(rect.y, 599);
+        assert.strictEqual(rect.w, 2001);
+        assert.strictEqual(rect.h, 1001);
         assert.strictEqual(rect.contentW, 4000);
         assert.strictEqual(rect.contentH, 4000);
     });
@@ -241,14 +241,14 @@ describe('calcItownsResizeRect', () => {
         // コンテンツ: virtual(960,540) size(480,270) = 画面中央の小さなコンテンツ
         // ウィンドウ: virtual(0,0) size(1920,1080) pixel=1920x1080 → scale=1
         // contentCoords.x = 960, y = 540, w=480, h=270
-        // x = -960, y = -540, w=1920, h=1080, contentW=480, contentH=270
+        // x = -961, y = -541, w=1921, h=1081, contentW=480, contentH=270
         const win = makeWindow(0, 0, 1920, 1080, 1920, 1080);
         const content = makeContent(960, 540, 480, 270);
         const rect = calcItownsResizeRect(content, win);
-        assert.strictEqual(rect.x, -960);
-        assert.strictEqual(rect.y, -540);
-        assert.strictEqual(rect.w, 1920);
-        assert.strictEqual(rect.h, 1080);
+        assert.strictEqual(rect.x, -961);
+        assert.strictEqual(rect.y, -541);
+        assert.strictEqual(rect.w, 1921);
+        assert.strictEqual(rect.h, 1081);
         assert.strictEqual(rect.contentW, 480);
         assert.strictEqual(rect.contentH, 270);
     });
@@ -257,32 +257,54 @@ describe('calcItownsResizeRect', () => {
         // コンテンツ: virtual(1600,900) size(640,360)
         // ウィンドウ: virtual(0,0) size(1920,1080) pixel=1920x1080 → scale=1
         // contentCoords.x=1600, y=900, w=640, h=360
-        // x=-1600, y=-900, w=1920, h=1080, contentW=640, contentH=360
+        // x=-1601, y=-901, w=1921, h=1081, contentW=640, contentH=360
         const win = makeWindow(0, 0, 1920, 1080, 1920, 1080);
         const content = makeContent(1600, 900, 640, 360);
         const rect = calcItownsResizeRect(content, win);
-        assert.strictEqual(rect.x, -1600);
-        assert.strictEqual(rect.y, -900);
-        assert.strictEqual(rect.w, 1920);
-        assert.strictEqual(rect.h, 1080);
+        assert.strictEqual(rect.x, -1601);
+        assert.strictEqual(rect.y, -901);
+        assert.strictEqual(rect.w, 1921);
+        assert.strictEqual(rect.h, 1081);
         assert.strictEqual(rect.contentW, 640);
         assert.strictEqual(rect.contentH, 360);
     });
 
-    it('アスペクト比: contentH/contentW が window pixelHeight/pixelWidth と等しいとき setViewOffset のオフセットが 0', () => {
-        // ウィンドウとコンテンツが同じ位置にあるとき、アスペクト比に関わらず x=0, y=0
+    it('全体寸法とwindow寸法が比例するときoverlapによるaspect比の差が小さい', () => {
+        // 同じ位置のwindowとcontentに旧版相当のoverlapを適用する
         // win virtualSize=1920x1080, pixel=3840x2160, content at same pos same size
         const win = makeWindow(0, 0, 1920, 1080, 3840, 2160);
         const content = makeContent(0, 0, 1920, 1080);
         const rect = calcItownsResizeRect(content, win);
-        assert.strictEqual(rect.x, 0);
-        assert.strictEqual(rect.y, 0);
-        assert.strictEqual(rect.w, 3840);
-        assert.strictEqual(rect.h, 2160);
+        assert.strictEqual(rect.x, -1);
+        assert.strictEqual(rect.y, -1);
+        assert.strictEqual(rect.w, 3841);
+        assert.strictEqual(rect.h, 2161);
         assert.strictEqual(rect.contentW, 3840);
         assert.strictEqual(rect.contentH, 2160);
-        // アスペクト比が一致していることを確認
-        assert.strictEqual(rect.contentW / rect.contentH, rect.w / rect.h);
+        const aspectRatioDifference = Math.abs(rect.contentW / rect.contentH - rect.w / rect.h);
+        assert.ok(aspectRatioDifference < 0.001);
+    });
+
+    it('物理解像度が異なっても同じ仮想矩形に対応する範囲を計算する', () => {
+        const content = makeContent(0, 0, 7680, 4320);
+        const leftWindow = makeWindow(0, 0, 3840, 2160, 3840, 2160);
+        const rightWindow = makeWindow(3840, 0, 3840, 2160, 2560, 1440);
+
+        const leftRect = calcItownsResizeRect(content, leftWindow);
+        const rightRect = calcItownsResizeRect(content, rightWindow);
+
+        assert.deepStrictEqual(
+            { x: leftRect.x, w: leftRect.w, contentW: leftRect.contentW },
+            { x: -1, w: 3841, contentW: 7680 }
+        );
+        assert.deepStrictEqual(
+            { x: rightRect.x, w: rightRect.w, contentW: rightRect.contentW },
+            { x: 2559, w: 2561, contentW: 5120 }
+        );
+        assert.strictEqual(leftRect.x + 1, 0);
+        assert.strictEqual(rightRect.x + 1, 2560);
+        assert.strictEqual(leftRect.contentW / leftWindow.pixelWidth, 2);
+        assert.strictEqual(rightRect.contentW / rightWindow.pixelWidth, 2);
     });
 });
 
@@ -304,13 +326,13 @@ function pixelRectsOverlap(
     pixelWidth: number,
     pixelHeight: number
 ): boolean {
-    const contentRight  = coords.x + coords.w;
+    const contentRight = coords.x + coords.w;
     const contentBottom = coords.y + coords.h;
     return !(
-        contentRight  <= 0          ||
-        coords.x      >= pixelWidth  ||
-        contentBottom <= 0          ||
-        coords.y      >= pixelHeight
+        contentRight <= 0 ||
+        coords.x >= pixelWidth ||
+        contentBottom <= 0 ||
+        coords.y >= pixelHeight
     );
 }
 

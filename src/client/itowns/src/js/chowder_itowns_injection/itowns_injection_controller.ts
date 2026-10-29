@@ -11,7 +11,14 @@ import { createOBJLayer } from './obj_layer';
 import { createTimescalePotreeLayer } from './timeseries_potree_layer';
 import { createTimescaleC3DTilesLayer } from './timeseries_c3dtiles_layer';
 import { C3DTileUtil } from './c3dtile_util';
-import { resizeMirrorRendering, stopMirrorControls } from './mirrorRendering';
+import {
+    calculateDisplayViewOffset,
+    removeViewResizeListener,
+    resizeMirrorRendering,
+    stopMirrorControls,
+    type DisplayViewOffset,
+    type RenderingAreaPlan,
+} from './mirrorRendering';
 import { isCameraRevision, isNewerCamera, type CameraRevision } from '../../../../../common/cameraState';
 
 // itowns の Camera ラッパー（three.js の camera3D とは別オブジェクト）が保持する LOD 判定用の値。
@@ -42,6 +49,15 @@ interface ReceivedCamera extends CameraRevision {
     params: ITownsCameraParams;
     diagnosticId?: string;
     diagnosticSessionId?: string;
+}
+
+interface DisplayResizeRect {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    contentW: number;
+    contentH: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -101,6 +117,8 @@ export class ITownsInjectionController {
     private contextLost = false;
     private latestCameraRevision: CameraRevision | null = null;
     private readonly pendingLayerProperties = new Map<string, Record<string, unknown>>();
+    private displayResizeRect: DisplayResizeRect | null = null;
+    private displayViewOffset: DisplayViewOffset | null = null;
 
     constructor(view: any, viewerDiv: HTMLElement, timeCallback: ((date: Date) => void) | null = null) {
         this.BarGraphExtent = new itowns.Extent('EPSG:4326', 0, 0, 0);
@@ -316,7 +334,10 @@ export class ITownsInjectionController {
     // -----------------------------------------------------------------------
 
     private injectaAsChOWDERDisplayController(data: { view: any; viewerDiv: HTMLElement; timeCallback: ((date: Date) => void) | null }): void {
-        window.removeEventListener('resize', undefined as any);
+        removeViewResizeListener(
+            this.itownsView._resizeListener as EventListener | undefined,
+            (type: 'resize', listener: EventListener): void => { window.removeEventListener(type, listener); },
+        );
         this.iframeConnector.on(ITownsCommand.Init, (_err, _param, request) => {
             this.iframeConnector.sendResponse(request);
         });
@@ -325,7 +346,18 @@ export class ITownsInjectionController {
             if (this.contextLost) {
                 return;
             }
-            resizeMirrorRendering(this.itownsView, data.viewerDiv.clientWidth, data.viewerDiv.clientHeight);
+            if (this.displayResizeRect !== null) {
+                this.resizeDisplayRendering(this.displayResizeRect);
+                return;
+            }
+            const width = data.viewerDiv.clientWidth;
+            const height = data.viewerDiv.clientHeight;
+            resizeMirrorRendering(this.itownsView, {
+                physicalWidth: width,
+                physicalHeight: height,
+                cssWidth: width,
+                cssHeight: height,
+            });
         };
         this.renderingObserver = new ResizeObserver(updateRendering);
         this.renderingObserver.observe(data.viewerDiv);
@@ -650,6 +682,7 @@ export class ITownsInjectionController {
         this.itownsView.camera._preSSE = cameraParams.preSSE;
         this.itownsView.camera.width = cameraParams.viewportWidth;
         this.itownsView.camera.height = cameraParams.viewportHeight;
+        this.applyDisplayCameraView();
         this.itownsView.notifyChange(cam);
     }
 
@@ -752,12 +785,106 @@ export class ITownsInjectionController {
         if (viewer === null || this.contextLost) {
             return;
         }
+        if (window.chowder_itowns_view_type === 'display' && param?.displayMode === true) {
+            if (!this.isDisplayResizeRect(param.rect)) {
+                return;
+            }
+            this.displayResizeRect = param.rect;
+            this.resizeDisplayRendering(param.rect);
+            return;
+        }
+        this.displayResizeRect = null;
+        this.displayViewOffset = null;
         viewer.style.position = 'relative';
         viewer.style.left = '0px';
         viewer.style.top = '0px';
         viewer.style.width = '100%';
         viewer.style.height = '100%';
-        resizeMirrorRendering(this.itownsView, viewer.clientWidth, viewer.clientHeight);
+        const width = viewer.clientWidth;
+        const height = viewer.clientHeight;
+        resizeMirrorRendering(this.itownsView, {
+            physicalWidth: width,
+            physicalHeight: height,
+            cssWidth: width,
+            cssHeight: height,
+        });
+    }
+
+    private isDisplayResizeRect(value: unknown): value is DisplayResizeRect {
+        if (typeof value !== 'object' || value === null) {
+            return false;
+        }
+        const rect = value as Record<string, unknown>;
+        const values = [rect.x, rect.y, rect.w, rect.h, rect.contentW, rect.contentH];
+        return values.every((dimension: unknown): boolean => { return typeof dimension === 'number' && Number.isFinite(dimension); })
+            && (rect.w as number) > 0
+            && (rect.h as number) > 0
+            && (rect.contentW as number) > 0
+            && (rect.contentH as number) > 0;
+    }
+
+    private resizeDisplayRendering(rect: DisplayResizeRect): void {
+        const viewer = this.itownsViewerDiv;
+        const devicePixelRatio = window.devicePixelRatio;
+        if (viewer === null || !Number.isFinite(devicePixelRatio) || devicePixelRatio <= 0) {
+            return;
+        }
+
+        viewer.style.position = 'relative';
+        viewer.style.left = `${rect.x}px`;
+        viewer.style.top = `${rect.y}px`;
+        viewer.style.width = `${rect.w}px`;
+        viewer.style.height = `${rect.h}px`;
+
+        const physicalWidth = rect.w * devicePixelRatio;
+        const physicalHeight = rect.h * devicePixelRatio;
+        const renderingPlan = resizeMirrorRendering(this.itownsView, {
+            physicalWidth,
+            physicalHeight,
+            cssWidth: rect.w,
+            cssHeight: rect.h,
+        });
+        if (renderingPlan === null) {
+            this.displayViewOffset = null;
+            return;
+        }
+
+        this.displayViewOffset = calculateDisplayViewOffset(rect, devicePixelRatio, renderingPlan);
+        if (this.displayViewOffset === null) {
+            return;
+        }
+        this.applyDisplayCameraView();
+        this.itownsView.notifyChange(this.itownsView.camera.camera3D);
+    }
+
+    private applyDisplayCameraView(): void {
+        const viewOffset = this.displayViewOffset;
+        if (viewOffset === null || this.itownsView === null) {
+            return;
+        }
+
+        const cameraWrapper = this.itownsView.camera;
+        const camera3D = cameraWrapper.camera3D;
+        camera3D.setViewOffset(
+            viewOffset.fullWidth,
+            viewOffset.fullHeight,
+            viewOffset.offsetX,
+            viewOffset.offsetY,
+            viewOffset.width,
+            viewOffset.height,
+        );
+
+        if (camera3D.isOrthographicCamera) {
+            cameraWrapper.width = viewOffset.width;
+            cameraWrapper.height = viewOffset.height;
+            cameraWrapper._preSSE = viewOffset.fullHeight;
+            return;
+        }
+
+        const verticalFov = itowns.THREE.MathUtils.degToRad(camera3D.fov);
+        cameraWrapper.width = viewOffset.fullWidth;
+        cameraWrapper.height = viewOffset.fullHeight;
+        cameraWrapper._preSSE = viewOffset.fullHeight / (2 * Math.tan(verticalFov * 0.5));
     }
 
     // -----------------------------------------------------------------------

@@ -106,10 +106,10 @@ export function calcItownsResizeRect(
         meta.posx, meta.posy, meta.width, meta.height, windowMeta
     );
     return {
-        x: Math.round(-contentCoords.x) || 0,        // コンテンツ内でのウィンドウ左上X（ピクセル）
-        y: Math.round(-contentCoords.y) || 0,        // コンテンツ内でのウィンドウ左上Y（ピクセル）
-        w: Math.round(windowMeta.pixelWidth),   // ウィンドウ実ピクセル幅
-        h: Math.round(windowMeta.pixelHeight),  // ウィンドウ実ピクセル高さ
+        x: Math.floor(-contentCoords.x - 0.5),  // 旧実装と同じ境界用の1px拡張
+        y: Math.floor(-contentCoords.y - 0.5),
+        w: Math.ceil(windowMeta.pixelWidth + 1),
+        h: Math.ceil(windowMeta.pixelHeight + 1),
         contentW: Math.round(contentCoords.w),  // コンテンツ実ピクセル幅 = setViewOffset の fullW
         contentH: Math.round(contentCoords.h),  // コンテンツ実ピクセル高さ = setViewOffset の fullH
     };

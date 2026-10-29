@@ -8,7 +8,7 @@
 import { IFrameConnector } from '../common/IFrameConnector';
 import { cameraMirrorUpdates } from '../common/cameraMirrorUpdates';
 import { isCameraRevision, type CameraRevision } from '../../common/cameraState';
-import { virtualToWindowCoordinates, type ContentMetadata, type WindowMetaData } from './contentCoordinates';
+import { calcItownsResizeRect, virtualToWindowCoordinates, type ContentMetadata, type WindowMetaData } from './contentCoordinates';
 import { TileImageRenderer, type TileImageMetadata } from './TileImageRenderer';
 import { resizeTextElem } from '../common/textUtils';
 
@@ -181,8 +181,12 @@ export class ContentRenderer {
     sendWebGLResize(metadataId: string): void {
         const webgl = this.webglConnectors.get(metadataId);
         if (!webgl) return;
-        // Display モード: setViewOffset は使わず、elem サイズ = document.body サイズ でフルレンダリング
-        const resizeParams: Record<string, unknown> = { displayMode: true };
+        const windowMeta = this.getWindowMeta();
+        if (windowMeta === null) return;
+        const resizeParams: Record<string, unknown> = {
+            displayMode: true,
+            rect: calcItownsResizeRect(webgl.contentMeta, windowMeta),
+        };
         const diagnosticSessionId = this.getDiagnosticSessionId();
         if (diagnosticSessionId !== null) {
             resizeParams.diagnosticSessionId = diagnosticSessionId;

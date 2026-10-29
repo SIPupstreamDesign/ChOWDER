@@ -1512,6 +1512,7 @@ class DisplayClient {
         let dprMediaQuery: MediaQueryList | null = null;
         const handleDevicePixelRatioChange = (): void => {
             observeDevicePixelRatio();
+            this.renderer.sendAllWebGLResize();
             this.refreshTileImages().catch((error: unknown) => {
                 console.error('[Display] Failed to refresh tile images after DPR change:', error);
             });

@@ -424,6 +424,9 @@ export class ChOWDERClient {
             chpwSubmitBtn: document.getElementById('chpw-submit-btn'),
             chpwCancelBtn: document.getElementById('chpw-cancel-btn'),
             clientCursorBase: document.getElementById('client-cursor-base'),
+            
+            showHelpButton: document.getElementById('btn-view-help'),
+            showAdminHelpButton: document.getElementById('btn-view-help-admin'),
         };
 
         //ルーラーエレメント
@@ -831,6 +834,16 @@ export class ChOWDERClient {
         this.elements.rightMenuSetHide?.addEventListener('contextmenu', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); this.contentManager.contentSetVisible(false); });
         this.elements.rightMenuSetVisible?.addEventListener('click', () => this.contentManager.contentSetVisible(true));
         this.elements.rightMenuSetVisible?.addEventListener('contextmenu', (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); this.contentManager.contentSetVisible(true); });
+        
+        this.elements.showHelpButton?.addEventListener('click', () => {
+            const locale = currentLocale();
+            this.elements.showHelpButton.href = 'manual/'+locale+'/3_1.html';
+        });
+        
+        this.elements.showAdminHelpButton?.addEventListener('click', () => {
+            const locale = currentLocale();
+            this.elements.showHelpButton.href = 'manual/'+locale+'/2_1.html';
+        });
     }
 
 
